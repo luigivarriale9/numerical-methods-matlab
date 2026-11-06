@@ -1,0 +1,6 @@
+*.asv
+*.autosave
+*.mex*
+slprj/
+.MATLABDriveTag
+.DS_Store
