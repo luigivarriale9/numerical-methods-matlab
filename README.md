@@ -198,3 +198,72 @@ method is symmetric and second-order, and it should be tested for:
 - convergence order (error versus step size against a reference solution);
 - Jacobi-constant drift against the other integrators;
 - time reversibility (integrate forward, then backward, and recover y0).
+
+## Arenstorf periodic orbit
+
+`arenstorf_orbit.m` compares ODE45, the implicit midpoint rule, explicit Euler,
+Störmer–Verlet and symplectic Euler on the Arenstorf periodic orbit of the planar
+circular restricted three-body problem (μ = 0.012277471, period T ≈ 17.065, rotating
+frame).
+
+Problem and initial data follow Hairer–Nørsett–Wanner, *Solving Ordinary
+Differential Equations I* (Springer, 1987), after R. F. Arenstorf, Am. J. Math. 85
+(1963), 27–35. The high-precision values of the initial velocity and of the period
+are verified numerically: the orbit closes after one period.
+
+The exact solution is periodic, so after one period every method should return to
+the initial state. The script reports (i) the maximum energy error of each method
+with respect to ODE45 (tolerances 10⁻⁸) and (ii) the distance of the final state from
+the initial one. The number of steps `n` is set at the top of the script
+(300000 in the thesis; the implicit midpoint rule solves a nonlinear system at every
+step, so it is slow).
+
+### Orbits
+
+Each plot shows the trajectory in the (q₁, q₂) plane; the green dot is the start and
+the red dot the end of the integration.
+
+| ODE45 | Implicit midpoint |
+|---|---|
+| ![ODE45](figures/arenstorf_ode45.png) | ![Implicit midpoint](figures/arenstorf_implicit_midpoint.png) |
+
+| Störmer–Verlet (classical) | Symplectic Euler |
+|---|---|
+| ![Störmer–Verlet](figures/arenstorf_stormer_verlet.png) | ![Symplectic Euler](figures/arenstorf_symplectic_euler.png) |
+
+| Explicit Euler | |
+|---|---|
+| ![Explicit Euler](figures/arenstorf_explicit_euler.png) | |
+
+ODE45, the implicit midpoint rule and Störmer–Verlet close the orbit in position;
+explicit Euler and symplectic Euler do not.
+
+### Energy error
+
+Energy error H(t) − H(0) of each method (the reference is the ODE45 solution):
+
+![Energy error](figures/arenstorf_energy.png)
+
+Explicit Euler is shown separately because its error is much larger:
+
+![Energy error, explicit Euler](figures/arenstorf_energy_explicit_euler.png)
+
+### Results (n = 300000 steps, h = 5.69·10⁻⁵)
+
+| Method | Max energy error vs ODE45 | Distance from y0 after one period |
+|---|---|---|
+| ODE45 (tol. 10⁻⁸) | – | 7.6·10⁻⁵ |
+| Implicit midpoint | 4.1·10⁻⁵ | 0.50 |
+| Störmer–Verlet (classical) | 2.1·10⁻⁴ | 0.85 |
+| Symplectic Euler | 4.6·10⁻³ | 2.12 |
+| Explicit Euler | 2.2·10⁻² | 1.83 |
+
+The distance is measured on the full state (position and velocity). The initial point
+is the closest approach to the secondary (about 0.006), where the velocity changes
+very fast: a small phase error therefore gives a large velocity error, which is why
+even the best fixed-step methods are far from 10⁻⁵ at t = T. The energy error jumps
+at the first close passage and stays almost constant afterwards.
+
+The classical Störmer–Verlet scheme is only first-order accurate in the rotating
+frame (see the section on Störmer–Verlet below); a dedicated generalized version is
+planned.
