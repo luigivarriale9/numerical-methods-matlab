@@ -13,13 +13,18 @@ function [t, y, h] = Stormer_Verlet(t0, tstop, y0, n, flag, fp, fq)
 %   Output:  t          time grid (n+1 points)
 %            y          solution [q; p], one column per time step
 %            h          step size
-%   Order of convergence: 2.
+%   Order of convergence: 2 for separable systems (fp independent of p).
 %
-%   Note: the flag = 1 branch uses the opposite sign in the half steps (as in the
-%   original thesis code), so it integrates the time-reversed flow: for the Kepler
-%   problem started at the pericentre the trajectory is mirrored (y -> -y).
-%   Conservation properties (energy, angular momentum, Jacobi constant) are not
-%   affected by this.
+%   Note: both branches integrate forward in time (an earlier version of the
+%   flag = 1 branch used the opposite sign in the half steps and integrated the
+%   time-reversed flow; this was corrected). With flag = 0 and flag = 1 the
+%   results coincide, because fq does not depend on q in the problems used here.
+%
+%   The scheme is the classical Stormer-Verlet method for separable systems,
+%   q' = fq(p), p' = fp(q). It is second-order for the Kepler problem. If fp also
+%   depends on p (e.g. the Coriolis term in the CR3BP rotating frame, with p taken
+%   as the velocity) the scheme is no longer symmetric and is only first-order
+%   accurate; see the generalized scheme described in the README.
 
 m = length(y0);
 h = (tstop - t0) / n;
@@ -41,10 +46,10 @@ if flag == 0
 elseif flag == 1
     for i = 1:n
         t(i + 1) = t(i) + h;
-        g = p(:, i) - (h/2) * fp(p(:, i), q(:, i));
-        q(:, i + 1) = fsolve(@(x) -x + q(:, i) - (h/2) * (fq(g, q(:, i)) + fq(g, x)), ...
+        g = p(:, i) + (h/2) * fp(p(:, i), q(:, i));
+        q(:, i + 1) = fsolve(@(x) -x + q(:, i) + (h/2) * (fq(g, q(:, i)) + fq(g, x)), ...
                              q(:, i), options);
-        p(:, i + 1) = g - (h/2) * fp(g, q(:, i + 1));
+        p(:, i + 1) = g + (h/2) * fp(g, q(:, i + 1));
     end
 end
 y = [q; p];
